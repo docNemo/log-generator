@@ -10,15 +10,14 @@ import java.time.LocalDateTime;
 import java.util.Random;
 
 public class LogGeneratorServiceFactory {
-    public LogGeneratorService logGeneratorService(int logsNumber) {
+    public LogGeneratorService logGeneratorService() {
 
         return new LogGeneratorService(
                 new GsonBuilder()
                         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
                         .create(),
                 new FileProvider(LocalDate.now() + ".log"),
-                new Random(),
-                logsNumber
+                new Random()
         );
     }
 }

@@ -93,19 +93,34 @@ public class LogGeneratorService {
             "ru.hub.trio.NotificationLogger",
             "com.joker.enterprise.EventLogger"
     );
+    private static final int BATCH_SIZE = 1000000;
 
     private final Gson gson;
     private final FileProvider fileProvider;
     private final Random random;
-    private final int logsNumber;
 
-    public void generateLogs() {
-        LocalDateTime start = LocalDateTime.now();
+    public void generateLogs(int logsNumber) {
+        LocalDateTime startTime = LocalDateTime.now();
         Map<String, Map<String, Integer>> frequency = new ConcurrentHashMap<>();
 
-        log.info("Start generation");
+        fileProvider.startLogFiles();
+        for (int offset = 0; offset < logsNumber; offset = offset + BATCH_SIZE) {
+            generateLogBatch(offset, frequency);
+        }
+        fileProvider.finishLogFiles();
+
+        log.info("Collect {} messages from purposed {}", checkFrequency(frequency), logsNumber);
+
+        LocalDateTime finishedSaving = LocalDateTime.now();
+        log.info("Finished {} ms", ChronoUnit.MILLIS.between(startTime, finishedSaving));
+    }
+
+    public void generateLogBatch(int offset, Map<String, Map<String, Integer>> frequency) {
+        LocalDateTime startTime = LocalDateTime.now();
+
+        log.info("Start generation {}", offset);
         List<String> logs = IntStream
-                .range(0, logsNumber)
+                .range(offset, offset + BATCH_SIZE)
                 .parallel()
                 .mapToObj(_ -> new Log())
                 .map(this::fillApp)
@@ -117,16 +132,14 @@ public class LogGeneratorService {
                 .toList();
 
         LocalDateTime finishedGeneration = LocalDateTime.now();
-        log.info("Finished generation for {}", ChronoUnit.MICROS.between(start, finishedGeneration));
-
-        log.info("В файле сумма сообщений {} при запрошенных {}", checkFrequency(frequency), logsNumber);
+        log.info("Finished generation {} for {} ms", offset, ChronoUnit.MILLIS.between(startTime, finishedGeneration));
 
         fileProvider.saveLogs(logs);
         fileProvider.saveReport(frequency);
 
         LocalDateTime finishedSaving = LocalDateTime.now();
-        log.info("Finished saving for {}", ChronoUnit.MICROS.between(finishedGeneration, finishedSaving));
-        log.info("Finished for {}", ChronoUnit.MICROS.between(start, finishedSaving));
+        log.info("Finished saving {} for {} ms", offset, ChronoUnit.MILLIS.between(finishedGeneration, finishedSaving));
+        log.info("Finished {} for {} ms", offset, ChronoUnit.MILLIS.between(startTime, finishedSaving));
     }
 
     Log fillApp(Log log) {
