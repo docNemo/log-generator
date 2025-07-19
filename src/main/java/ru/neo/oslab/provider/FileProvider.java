@@ -25,6 +25,16 @@ public class FileProvider {
         }
     }
 
+    public void clearFile() {
+        try (PrintWriter writer = new PrintWriter(new FileOutputStream(fileName))) {
+            writer.print("");
+
+            log.info("Save start file logs to {}", fileName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public void finishLogFiles() {
         try (PrintWriter writer = new PrintWriter(new FileOutputStream(fileName, APPEND_MODE))) {
             writer.println("]");
@@ -35,10 +45,22 @@ public class FileProvider {
         }
     }
 
-    public void saveLogs(List<String> logs) {
+    public void saveLogsWithComma(List<String> logs) {
         try (PrintWriter writer = new PrintWriter(new FileOutputStream(fileName, APPEND_MODE))) {
             for (String s : logs) {
                 writer.println(s + ",");
+            }
+
+            log.info("Save {} logs to {}", logs.size(), fileName);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void saveLogs(List<String> logs) {
+        try (PrintWriter writer = new PrintWriter(new FileOutputStream(fileName, APPEND_MODE))) {
+            for (String s : logs) {
+                writer.println(s);
             }
 
             log.info("Save {} logs to {}", logs.size(), fileName);

@@ -103,11 +103,12 @@ public class LogGeneratorService {
         LocalDateTime startTime = LocalDateTime.now();
         Map<String, Map<String, Integer>> frequency = new ConcurrentHashMap<>();
 
-        fileProvider.startLogFiles();
+//        fileProvider.startLogFiles();
+        fileProvider.clearFile();
         for (int offset = 0; offset < logsNumber; offset = offset + BATCH_SIZE) {
             generateLogBatch(offset, frequency);
         }
-        fileProvider.finishLogFiles();
+//        fileProvider.finishLogFiles();
 
         log.info("Collect {} messages from purposed {}", checkFrequency(frequency), logsNumber);
 
